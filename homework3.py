@@ -25,50 +25,60 @@ def isVariable(parameter):
             return False
     return True
 
-
-def canUnify(parameter_in_sentence, parameter_in_query):
-    if len(parameter_in_query) != len(parameter_in_sentence):
-        return False
-
+def getParameterFromTerm(term):
+    return term[term.find("(") + 1:term.find(")")]
 
 def resolveIfLiteralPresent(query):
     predicate = query.split('(')[0]
-    parameter_in_query = query[query.find("(")+1:query.find(")")] # get parameter in ()
+    parameters_in_query = getParameterFromTerm(query) # get parameter in ()
     for sentence in sentences:
         if is_single_literal(sentence) and predicate in sentence: # Get single literal sentences
-            parameter_in_sentence = sentence[sentence.find("(")+1:sentence.find(")")] #get parameter within ()
-            if isVariable(parameter_in_sentence) or parameter_in_query == parameter_in_sentence:
+            parameters_in_sentence = getParameterFromTerm(sentence) #get parameter within ()
+            if isVariable(parameters_in_sentence) or parameters_in_query == parameters_in_sentence:
                 return True
+            if isVariable(parameters_in_query) and not isVariable(parameters_in_sentence): # UNIFY here and return the var-const matching
+                return getUnifierDict(query, predicate)
     return False
 
 def resolve(query): #TODO add DP
     return resolveIfLiteralPresent(query) or resolveByImplication(query) or resolveByOrElimination(query)
 
+def getUnifierDict(query, term):
+    unifiers = {}
+    if getPredicate(query) != getPredicate(term):
+        return None
+    query_params = getParameterFromTerm(query).split(',')
+    term_params = getParameterFromTerm(term).split(',')
+    if query_params == term_params:
+        return term
+    no_of_params = len(query_params)
+    for i in range(0, no_of_params):
+        if not (isVariable(term_params[i]) and isVariable(query_params[i])):
+            getVariableConstantPair(term_params[i], query_params[i]) #TODO COmplete imme
+            unifiers[term_params[i]] = query_params[i]
+    return unifiers
+
 def findImplicationSentencesInWhichQueryExists(query):
     implicationSentences = []
     for sentence in sentences:
-        if len(sentence.split('|')) == 2 and query in sentence.split('|')[1]:
+        if len(sentence.split('|')) == 2:
+            conclusion = sentence.split('|')[1]
+            if getPredicate(query) in conclusion:
+                getUnifierDict(query, conclusion)
                 implicationSentences.append(sentence)
     return implicationSentences
 
 def negation(term):
-    if '~' in term:
-        term = term.strip('~')
-    else:
-        term = '~' + term
-    return term
-
+    return term.strip('~') if '~' in term else '~' + term
 
 def getPredicate(query):
     return query.split('(')[0]
 
-
 def unificationNeeded(query, sentence):
     pass #if query in sentence: #TODO is this needed?
 
-
 def findDNFInWhichQueryExists(query):
-    for sentence in sentences:
+    for sentence in sentences: #TODO instead of looping all sentences, fetch from pre-indexed list where query is present
         if getPredicate(query) in sentence and negation(getPredicate(query)) not in sentence:
             if unificationNeeded(query, sentence):
                 pass#do something
