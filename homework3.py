@@ -21,9 +21,9 @@ def is_single_literal(sentence):
 def isVariable(parameter):
     list_of_parameters = parameter.split(',')
     for parameter in list_of_parameters:
-        if parameter[0].isupper():
-            return False
-    return True
+        if parameter[0].islower():
+            return True
+    return False
 
 def getParameterFromTerm(term):
     return term[term.find("(") + 1:term.find(")")]
@@ -37,11 +37,14 @@ def resolveIfLiteralPresent(query):
             if isVariable(parameters_in_sentence) or parameters_in_query == parameters_in_sentence:
                 return True
             if isVariable(parameters_in_query) and not isVariable(parameters_in_sentence): # UNIFY here and return the var-const matching
-                return getUnifierDict(query, predicate)
+                return getUnifierDict(query, sentence)
     return False
 
 def resolve(query): #TODO add DP
     return resolveIfLiteralPresent(query) or resolveByImplication(query) or resolveByOrElimination(query)
+
+def getVariableConstantPair(param1, param2):
+        return (param1, param2) if isVariable(param1) else (param2, param1)
 
 def getUnifierDict(query, term):
     unifiers = {}
@@ -50,38 +53,62 @@ def getUnifierDict(query, term):
     query_params = getParameterFromTerm(query).split(',')
     term_params = getParameterFromTerm(term).split(',')
     if query_params == term_params:
-        return term
+        return {}
     no_of_params = len(query_params)
     for i in range(0, no_of_params):
         if not (isVariable(term_params[i]) and isVariable(query_params[i])):
-            getVariableConstantPair(term_params[i], query_params[i]) #TODO COmplete imme
-            unifiers[term_params[i]] = query_params[i]
+            variable_constant_pair = getVariableConstantPair(term_params[i], query_params[i]) # to reorder as {variable : constant}
+            unifiers[variable_constant_pair[0]] = variable_constant_pair[1]
     return unifiers
 
 def findImplicationSentencesInWhichQueryExists(query):
-    implicationSentences = []
+    implicationSentences, implication_sentences_with_unification = [], []
     for sentence in sentences:
-        if len(sentence.split('|')) == 2:
+        if len(sentence.split('|')) == 2: #Sentence capable of being in implication form
             conclusion = sentence.split('|')[1]
             if getPredicate(query) in conclusion:
-                getUnifierDict(query, conclusion)
-                implicationSentences.append(sentence)
-    return implicationSentences
+                query_params = getParameterFromTerm(query)
+                conclusion_params = getParameterFromTerm(conclusion)
+                if query_params == conclusion_params or (isVariable(query_params) and isVariable(conclusion_params)):
+                    implicationSentences.append(sentence) # When query matches conclusion in simple way
+                else:
+                    if not getUnifierDict(query, conclusion):
+                        implication_sentences_with_unification.append(sentence) # When query matches conclusion after unification
 
-def negation(term):
+    return implicationSentences, implication_sentences_with_unification
+
+def apply_unifiers(term, unifiers):
+    for key in unifiers:
+        term = term.replace(key, unifiers[key])
+    return term
+
+def resolveByImplication(query):
+    implication_sentences, implication_sentences_with_unification = findImplicationSentencesInWhichQueryExists(query)
+    for implication_sentence in implication_sentences:
+        premise, conclusion = get_premise_and_conclusion(implication_sentence)
+        result_resolve_premise = resolve(premise)
+        if result_resolve_premise:
+            return result_resolve_premise
+
+    for implication_sentence in implication_sentences_with_unification:
+        premise, conclusion = get_premise_and_conclusion(implication_sentence)
+        unifier_list = getUnifierDict(query, conclusion)
+        premise = apply_unifiers(premise, unifier_list)
+        if resolve(premise):
+            return unifier_list
+    return False
+
+def negation(term): #TODO implement to solve neg(query)
     return term.strip('~') if '~' in term else '~' + term
 
 def getPredicate(query):
     return query.split('(')[0]
 
-def unificationNeeded(query, sentence):
-    pass #if query in sentence: #TODO is this needed?
-
 def findDNFInWhichQueryExists(query):
     for sentence in sentences: #TODO instead of looping all sentences, fetch from pre-indexed list where query is present
         if getPredicate(query) in sentence and negation(getPredicate(query)) not in sentence:
-            if unificationNeeded(query, sentence):
-                pass#do something
+            #if unificationNeeded(query, sentence):
+                #pass#do something
             disjunct_list = sentence.split('|')
             disjunct_list = list(map(str.strip, disjunct_list))[:-1] # TODO need not be the last always
             neg_disjunct_list = list(map(negation, disjunct_list))
@@ -92,23 +119,19 @@ def resolveByOrElimination(query):
     neg_disjuncts = findDNFInWhichQueryExists(query) #TODO do for all such sentences
     if not neg_disjuncts: # there is no sentence with multiple disjuncts
         return False
+    unifier_list = {}
     for neg_disjunct in neg_disjuncts:
-        if not resolve(neg_disjunct):
+        result = resolve(neg_disjunct)
+        if not result:
             return False
-    return True
+        else:
+            unifier_list.update(result)
+    return unifier_list
 
-def get_premises(sentences):
-    premises = []
-    for sentence in sentences:
-        premises.append(negation(sentence.split('|')[0]).strip())
-    return premises
+def get_premise_and_conclusion(implication_sentence):
+    parts = implication_sentence.split('|')
+    return negation(parts[0].strip()), parts[1].strip()
 
-def resolveByImplication(query):
-    premises = get_premises(findImplicationSentencesInWhichQueryExists(query))
-    for premise in premises:
-        if resolve(premise):
-            return True
-    return False
 
 if __name__ == '__main__':
     getInputs(queries, sentences, 'input.txt')
