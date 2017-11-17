@@ -68,12 +68,14 @@ def getUnifierDict(query, term):
     return unifiers
 
 
-def apply_unifiers(term, unifiers):
+def apply_unifiers(term, unifiers): #TODO FIX
     predicate = getPredicate(term)
     params = getParameterFromTerm(term)
-    for key in unifiers:
-        params = params.replace(key, unifiers[key])
-    return predicate + '(' + params + ')'
+    params_list = params.split(',')
+
+    new_params_list = [unifiers[param] if param in unifiers else param for param in params_list]
+
+    return predicate + '(' + ','.join(new_params_list) + ')'
 
 def negation(term): #TODO implement to solve neg(query)
     return term.strip('~') if '~' in term else '~' + term
@@ -90,11 +92,8 @@ def getMatchingTerm(query, disjunct_list):
 
 
 def findDNFInWhichQueryExists(query, sentence):
-    if getPredicate(query) in sentence and negation(getPredicate(query)) not in sentence: #TODO Should solve even if just neg(query) present?
-        #if unificationNeeded(query, sentence):
-            #pass#do something
-        disjunct_list = sentence.split('|')
-
+    disjunct_list = sentence.split('|')
+    if getPredicate(query) in disjunct_list[-1]: #TODO Should solve even if just neg(query) present?
         disjunct_list = list(map(str.strip, disjunct_list))
         corresponding_disjunct = disjunct_list[-1]#getMatchingTerm(query, disjunct_list)
         disjunct_list.remove(corresponding_disjunct)
@@ -107,7 +106,9 @@ def applyTransitiveOperation(pre_unifier_list, unifier_list):
 
     for key in pre_unifier_list:
         if pre_unifier_list[key] in unifier_list:
+            temp = pre_unifier_list[key]
             pre_unifier_list[key] = unifier_list[pre_unifier_list[key]]
+            del unifier_list[temp]
 
 def removeVariableMappingsInUnifierList(pre_unifier_list):
     return {key: value for key, value in pre_unifier_list.items() if not (isVariable(key) and isVariable(value))}
@@ -145,6 +146,7 @@ def resolveByOrElimination(query, sentence):
             unifier_list.update(result)
     applyTransitiveOperation(pre_unifier_list, unifier_list)
     #pre_unifier_list = removeConstantAsKeyItems(pre_unifier_list)
+    pre_unifier_list.update(unifier_list)
     return pre_unifier_list
 
 if __name__ == '__main__':
