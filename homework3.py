@@ -67,21 +67,6 @@ def getUnifierDict(query, term):
             unifiers[query_params[i]] = term_params[i]                     # param order matters here for getVarConstPair()
     return unifiers
 
-def findImplicationSentencesInWhichQueryExists(query):
-    implicationSentences, implication_sentences_with_unification = [], []
-    for sentence in KB_sentences:
-        if len(sentence.split('|')) == 2: #Sentence capable of being in implication form
-            conclusion = sentence.split('|')[1]
-            if getPredicate(query) in conclusion: # Sentence has query as conclusion
-                query_params = getParameterFromTerm(query)
-                conclusion_params = getParameterFromTerm(conclusion)
-                if query_params == conclusion_params or (isVariable(query_params) and isVariable(conclusion_params)):
-                    implicationSentences.append(sentence) # When query matches conclusion in simple way
-                else:
-                    if getUnifierDict(query, conclusion):
-                        implication_sentences_with_unification.append(sentence) # When query matches conclusion after unification
-
-    return implicationSentences, implication_sentences_with_unification
 
 def apply_unifiers(term, unifiers):
     predicate = getPredicate(term)
@@ -89,22 +74,6 @@ def apply_unifiers(term, unifiers):
     for key in unifiers:
         params = params.replace(key, unifiers[key])
     return predicate + '(' + params + ')'
-
-def resolveByImplication(query):
-    implication_sentences, implication_sentences_with_unification = findImplicationSentencesInWhichQueryExists(query)
-    for implication_sentence in implication_sentences:
-        premise, conclusion = get_premise_and_conclusion(implication_sentence)
-        result_of_resolve_premise_call = resolve(premise)
-        if result_of_resolve_premise_call:
-            return result_of_resolve_premise_call
-
-    for implication_sentence in implication_sentences_with_unification:
-        premise, conclusion = get_premise_and_conclusion(implication_sentence)
-        unifier_list = getUnifierDict(query, conclusion)
-        premise = apply_unifiers(premise, unifier_list)
-        if resolve(premise):
-            return unifier_list
-    return False
 
 def negation(term): #TODO implement to solve neg(query)
     return term.strip('~') if '~' in term else '~' + term
@@ -177,11 +146,6 @@ def resolveByOrElimination(query, sentence):
     applyTransitiveOperation(pre_unifier_list, unifier_list)
     #pre_unifier_list = removeConstantAsKeyItems(pre_unifier_list)
     return pre_unifier_list
-
-def get_premise_and_conclusion(implication_sentence):
-    parts = implication_sentence.split('|')
-    return negation(parts[0].strip()), parts[1].strip()
-
 
 if __name__ == '__main__':
     getInputs(queries, KB_sentences, 'input.txt')
