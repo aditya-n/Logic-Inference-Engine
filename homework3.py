@@ -46,8 +46,12 @@ def resolveIfLiteralPresent(query):
                 return getUnifierDict(query, sentence)
     return False
 
-def resolve(query): #TODO add DP
-    return resolveIfLiteralPresent(query)  or resolveByOrEliminationForKB(query) #or resolveByImplication(query)
+def resolve(query, sentence_set): #TODO add DP
+    new_sentence_set = sentence_set.copy()
+    if query in new_sentence_set:
+        return False
+    new_sentence_set.add(query)
+    return resolveIfLiteralPresent(query)  or resolveByOrEliminationForKB(query, new_sentence_set) #or resolveByImplication(query)
 
 def getVariableConstantPair(param1, param2):
     return (param1, param2) if isVariable(param1) else (param2, param1)
@@ -93,8 +97,8 @@ def getMatchingTerm(query, disjunct_list):
 
 def findDNFInWhichQueryExists(query, sentence):
     disjunct_list = sentence.split('|')
-    if getPredicate(query) in disjunct_list[-1]: #TODO Should solve even if just neg(query) present?
-        disjunct_list = list(map(str.strip, disjunct_list))
+    disjunct_list = list(map(str.strip, disjunct_list))
+    if getPredicate(query) == getPredicate(disjunct_list[-1]): #TODO Should solve even if just neg(query) present?
         corresponding_disjunct = disjunct_list[-1]#getMatchingTerm(query, disjunct_list)
         disjunct_list.remove(corresponding_disjunct)
         neg_disjunct_list = list(map(negation, disjunct_list))
@@ -113,9 +117,9 @@ def applyTransitiveOperation(pre_unifier_list, unifier_list):
 def removeVariableMappingsInUnifierList(pre_unifier_list):
     return {key: value for key, value in pre_unifier_list.items() if not (isVariable(key) and isVariable(value))}
 
-def resolveByOrEliminationForKB(query):
+def resolveByOrEliminationForKB(query, sentence_set):
     for sentence in KB_sentences: #TODO instead of looping all sentences, fetch from pre-indexed list where query is present
-        resolve_result = resolveByOrElimination(query, sentence)
+        resolve_result = resolveByOrElimination(query, sentence, sentence_set)
         if resolve_result:
             return resolve_result
     return False
@@ -128,7 +132,7 @@ def removeConstantAsKeyItems(unifier_list):
             del unifier_list_clone[key]
     return unifier_list_clone
 
-def resolveByOrElimination(query, sentence):
+def resolveByOrElimination(query, sentence, sentence_set):
     #KB_sentences.remove(sentence)
     neg_disjuncts, corresponding_disjunct = findDNFInWhichQueryExists(query, sentence)
     if not neg_disjuncts: # there is no sentence with multiple disjuncts
@@ -139,7 +143,7 @@ def resolveByOrElimination(query, sentence):
     unifier_list = removeConstantAsKeyItems(unifier_list)
     for neg_disjunct in neg_disjuncts:
         neg_disjunct = apply_unifiers(neg_disjunct, unifier_list)
-        result = resolve(neg_disjunct)
+        result = resolve(neg_disjunct, sentence_set)
         if not result:
             return False
         elif not type(result) == type(True):
@@ -150,6 +154,6 @@ def resolveByOrElimination(query, sentence):
     return pre_unifier_list
 
 if __name__ == '__main__':
-    getInputs(queries, KB_sentences, 'input.txt')
+    getInputs(queries, KB_sentences, 'test2.txt')
     for query in queries:
-        print(resolve(query))
+        print(True if resolve(query, set()) else False)
