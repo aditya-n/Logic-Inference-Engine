@@ -39,4 +39,10 @@ class TestInference(TestCase):
         self.assertNotEqual(False, homework3.resolve('G(Tom)', set()));
 
 
+    def test_4(self):
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test4.txt')
+        self.assertEqual(False, homework3.resolve('Kills(Curiosity,Tuna)', set()));
 
+    def test_5(self):
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test5.txt')
+        self.assertNotEqual(False, homework3.resolve('L(Tony,Snow)', set()));

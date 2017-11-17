@@ -72,7 +72,7 @@ def getUnifierDict(query, term):
     return unifiers
 
 
-def apply_unifiers(term, unifiers): #TODO FIX
+def apply_unifiers(term, unifiers):
     predicate = getPredicate(term)
     params = getParameterFromTerm(term)
     params_list = params.split(',')
@@ -132,6 +132,17 @@ def removeConstantAsKeyItems(unifier_list):
             del unifier_list_clone[key]
     return unifier_list_clone
 
+
+def getUnifierListForNegDisjunctList(unifier_list, neg_disjuncts, sentence_set):
+    for neg_disjunct in neg_disjuncts:
+        neg_disjunct = apply_unifiers(neg_disjunct, unifier_list)
+        result = resolve(neg_disjunct, sentence_set)
+        if not result:
+            return None
+        elif not type(result) == type(True):
+            unifier_list.update(result)
+    return unifier_list
+
 def resolveByOrElimination(query, sentence, sentence_set):
     #KB_sentences.remove(sentence)
     neg_disjuncts, corresponding_disjunct = findDNFInWhichQueryExists(query, sentence)
@@ -141,19 +152,16 @@ def resolveByOrElimination(query, sentence, sentence_set):
     pre_unifier_list = getUnifierDict(query, corresponding_disjunct)
     unifier_list = reverseMapping(removeVariableMappingsInUnifierList(pre_unifier_list)) # filtering var-var unifications
     unifier_list = removeConstantAsKeyItems(unifier_list)
-    for neg_disjunct in neg_disjuncts:
-        neg_disjunct = apply_unifiers(neg_disjunct, unifier_list)
-        result = resolve(neg_disjunct, sentence_set)
-        if not result:
-            return False
-        elif not type(result) == type(True):
-            unifier_list.update(result)
+
+    unifier_list = getUnifierListForNegDisjunctList(unifier_list, neg_disjuncts, sentence_set)
+    if unifier_list is None:
+        return False
+
     applyTransitiveOperation(pre_unifier_list, unifier_list)
-    #pre_unifier_list = removeConstantAsKeyItems(pre_unifier_list)
     pre_unifier_list.update(unifier_list)
     return pre_unifier_list
 
 if __name__ == '__main__':
-    getInputs(queries, KB_sentences, 'test2.txt')
+    getInputs(queries, KB_sentences, 'input.txt')
     for query in queries:
         print(True if resolve(query, set()) else False)
