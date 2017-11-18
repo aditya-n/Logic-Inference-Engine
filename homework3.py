@@ -234,6 +234,6 @@ if __name__ == '__main__':
     file = open('output.txt', 'w')
     for query in queries:
         result = resultInCorrectOutputFormat(query)
-        print(result)
-        file.write(result)
+        #print(result)
+        file.write(result+'\n')
     file.close()
