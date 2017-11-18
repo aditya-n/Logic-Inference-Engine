@@ -218,5 +218,9 @@ def resolveByOrElimination(query, sentence, sentence_set):
 
 if __name__ == '__main__':
     getInputs(queries, KB_sentences, 'input.txt')
+    file = open('output.txt', 'w')
     for query in queries:
-        print(True if resolve(query, set()) else False)
+        result = "TRUE" if resolve(query, set()) else "FALSE"
+        print(result)
+        file.write(result)
+    file.close()

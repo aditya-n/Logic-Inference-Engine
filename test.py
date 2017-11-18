@@ -56,3 +56,7 @@ class TestInference(TestCase):
         homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test5.txt')
         self.assertNotEqual(False, homework3.resolve('L(Tony,Snow)', set()));
 
+    def test_dropbox(self):
+        homework3.queries, homework3.KB_sentences = [], []
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'input.txt')
+        self.assertNotEqual(False, homework3.resolve('B(John)', set()));
