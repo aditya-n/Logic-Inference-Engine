@@ -2,7 +2,7 @@ from unittest import TestCase
 import homework3
 
 class TestInference(TestCase):
-    def test_getInputs(self):
+    def test_0(self):
         homework3.queries = ['R(John, Joe)']
         homework3.KB_sentences = ['~G(x) | H(x)',
                                 '~H(x) | F(x)',
@@ -30,8 +30,10 @@ class TestInference(TestCase):
         homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test1.txt')
 
         a = homework3.resolveIfLiteralPresent('B(John,y)');
+        a = homework3.resolveIfLiteralPresent('D(Joe,y)');
         self.assertEqual(False, homework3.resolve('F(Joe)', set()));
         a = homework3.resolve('B(John,x)', set());
+        a = homework3.resolve('C(John,Joe)', set());
         a = homework3.resolve('A(John)', set());
 
         self.assertNotEqual(False, homework3.resolve('H(John)', set()));
@@ -48,3 +50,4 @@ class TestInference(TestCase):
     def test_5(self):
         homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test5.txt')
         self.assertNotEqual(False, homework3.resolve('L(Tony,Snow)', set()));
+

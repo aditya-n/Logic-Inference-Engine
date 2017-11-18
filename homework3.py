@@ -42,11 +42,11 @@ def updateDict(unifier_list, new_unifiers):
             unifier_list[key] = new_unifiers[key]
 
 def resolveIfLiteralPresent(query):
-    predicate = query.split('(')[0]
+    predicate = getPredicate(query)
     parameters_in_query = getParameterFromTerm(query) # get parameter in ()
     unifier_list = {}
     for sentence in KB_sentences:
-        if is_single_literal(sentence) and predicate in sentence: # Get single literal sentences
+        if is_single_literal(sentence) and predicate == getPredicate(sentence): # Get single literal sentences
             parameters_in_sentence = getParameterFromTerm(sentence) #get parameter within ()
             if isVariable(parameters_in_sentence) or parameters_in_query == parameters_in_sentence:
                 return True
@@ -62,7 +62,7 @@ def resolve(query, sentence_set): #TODO add DP
     if query in new_sentence_set:
         return False
     new_sentence_set.add(query)
-    return resolveIfLiteralPresent(query)  or resolveByOrEliminationForKB(query, new_sentence_set) #or resolveByImplication(query)
+    return resolveIfLiteralPresent(query)  or resolveByOrEliminationForKB(query, new_sentence_set) # or resolveByImplication(query) #implication is a specific case of orElim
 
 def getVariableConstantPair(param1, param2):
     return (param1, param2) if isVariable(param1) else (param2, param1)
@@ -78,8 +78,10 @@ def getUnifierDict(query, term):
     no_of_params = len(query_params)
     for i in range(0, no_of_params):
         if not(term_params[i] == query_params[i]):
-            #variable_constant_pair = getVariableConstantPair(query_params[i], term_params[i]) # to reorder as {variable : constant} or {var1 : var2},
-            unifiers[query_params[i]] = term_params[i]                     # param order matters here for getVarConstPair()
+            if not isVariable(term_params[i]) and not isVariable(query_params[i]): # when match is between 2 unequal constants
+                return {}                                                             # There is no unification for the whole query and term
+            else:
+                unifiers[query_params[i]] = term_params[i]   # param order matters here for getVarConstPair()
     return unifiers
 
 
@@ -109,13 +111,15 @@ def getMatchingTerm(query, disjunct_list):
 def findDNFInWhichQueryExists(query, sentence):
     disjunct_list = sentence.split('|')
     disjunct_list = list(map(str.strip, disjunct_list))
-    if getPredicate(query) == getPredicate(disjunct_list[-1]): #TODO Should solve even if just neg(query) present?
-        corresponding_disjunct = disjunct_list[-1]#getMatchingTerm(query, disjunct_list)
+    corresponding_disjunct = None
+    for disjunct in disjunct_list:
+        if getPredicate(query) == getPredicate(disjunct): #TODO Should solve even if just neg(query) present?
+            corresponding_disjunct = disjunct #getMatchingTerm(query, disjunct_list)
+    if corresponding_disjunct:
         disjunct_list.remove(corresponding_disjunct)
         neg_disjunct_list = list(map(negation, disjunct_list))
         return neg_disjunct_list, corresponding_disjunct
     return None, None
-
 
 def applyTransitiveOperation(pre_unifier_list, unifier_list):
 
@@ -150,40 +154,52 @@ def getMultiValuedKeyIfPresentInDict(unifier_list_for_this_disjunct):
             return key
     return False
 
-def getUpdatedUnifierList(unifier_list, neg_disjuncts, index, sentence_set):
+def getUpdatedUnifierListForMultiValuedKeys(unifier_list, neg_disjuncts, index, sentence_set):
     new_unifier_list = unifier_list.copy()
-    if index == len(neg_disjuncts):
+    new_neg_disjuncts = neg_disjuncts.copy()
+    if index == len(new_neg_disjuncts):
         return unifier_list
 
-    unifier_list_for_this_disjunct = resolve(neg_disjuncts[index], sentence_set)
+    new_neg_disjuncts[index] = apply_unifiers(new_neg_disjuncts[index], new_unifier_list)
+    unifier_list_for_this_disjunct = resolve(new_neg_disjuncts[index], sentence_set)
+
+    if not unifier_list_for_this_disjunct:
+        return None
+    elif type(unifier_list_for_this_disjunct) == type(True):
+        return getUpdatedUnifierListForMultiValuedKeys(new_unifier_list, new_neg_disjuncts, index + 1, sentence_set)
+
+    new_unifier_list.update(unifier_list_for_this_disjunct)
+
     multi_valued_key = getMultiValuedKeyIfPresentInDict(unifier_list_for_this_disjunct)
     if multi_valued_key:
         branch_values = unifier_list_for_this_disjunct[multi_valued_key].split('&')
-        del unifier_list_for_this_disjunct[multi_valued_key]
         for value in branch_values:
-            unifier_list_for_this_disjunct.update({multi_valued_key : value})
-            result = getUpdatedUnifierList(unifier_list, neg_disjuncts, index + 1, sentence_set)
-            if result is not False:
+            del new_unifier_list[multi_valued_key]
+            new_unifier_list.update({multi_valued_key : value})
+            result = getUpdatedUnifierListForMultiValuedKeys(new_unifier_list, new_neg_disjuncts, index + 1, sentence_set)
+            if result:
                 return result
-            return False
+        return None
     else:
-        new_unifier_list.update(unifier_list_for_this_disjunct)
-        return getUpdatedUnifierList(unifier_list, neg_disjuncts, index + 1, sentence_set)
-
+        return getUpdatedUnifierListForMultiValuedKeys(new_unifier_list, new_neg_disjuncts, index + 1, sentence_set)
+        #raise ValueError('WHY NOT MULTIVALUED') # Why did your code arrive here? HUHHHHHHHHHHHHHHHHHHHHH?
 
 
 def getUnifierListForNegDisjunctList(unifier_list, neg_disjuncts, sentence_set):
-    for neg_disjunct in neg_disjuncts:
+    for index, neg_disjunct in enumerate(neg_disjuncts):
         neg_disjunct = apply_unifiers(neg_disjunct, unifier_list)
         result = resolve(neg_disjunct, sentence_set)
-        if not result:
+        if not result: #Case : Can't unify
             return None
-        elif not type(result) == type(True):
-            unifier_list.update(result)
+        elif not type(result) == type(True): #Case: one variable unifies to multipl constants
+            if getMultiValuedKeyIfPresentInDict(result):
+                return getUpdatedUnifierListForMultiValuedKeys(unifier_list, neg_disjuncts, index, sentence_set) # do something
+            else:                            #Case: normal
+                unifier_list.update(result)
     return unifier_list
 
+
 def resolveByOrElimination(query, sentence, sentence_set):
-    #KB_sentences.remove(sentence)
     neg_disjuncts, corresponding_disjunct = findDNFInWhichQueryExists(query, sentence)
     if not neg_disjuncts: # there is no sentence with multiple disjuncts
         return False
