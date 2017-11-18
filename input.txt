@@ -1,5 +1,8 @@
-1
-P(Joe, Mary)
 2
-P(x,y) | P(a,b) | ~A(x)
-A(y) | ~P(c,d)
+B(Ada)
+D(Chris)
+4
+~A(x) | B(Ada)
+A(Umbrella)
+C(x,Jill) | D(x)
+~C(x,Jill)

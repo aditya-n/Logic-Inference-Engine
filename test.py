@@ -1,5 +1,5 @@
 from unittest import TestCase
-import homework3
+import homework3, os
 
 class TestInference(TestCase):
     def test_0(self):
@@ -59,11 +59,20 @@ class TestInference(TestCase):
         homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test5.txt')
         self.assertNotEqual(False, homework3.resolve('L(Tony,Snow)', set()));
 
+    def test_input(self):
+        homework3.queries, homework3.KB_sentences = [], []
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'input.txt')
+        a = homework3.resolve('B(Ada)', set());
+        pass
+
     def test_dropbox(self):
-        for i in range(1,11):
+        for i in range(1,14):
             homework3.queries, homework3.KB_sentences = [], []
-            homework3.getInputs(homework3.queries, homework3.KB_sentences, 'tests/input' + i + '.txt')
-            with open('tests/output' + i + '.txt', 'r') as output_file:
+            homework3.getInputs(homework3.queries, homework3.KB_sentences, os.path.join('tests', 'input' + str(i) + '.txt'))
+            with open(os.path.join('tests', 'output' + str(i) + '.txt'), 'r') as output_file:
                 lines = output_file.readlines()
+                j = 0
                 for output_line in lines:
-                    self.assertEqual(output_line.strip(), homework3.resultInCorrectOutputFormat(homework3.queries[i], set()))
+                    result = homework3.resultInCorrectOutputFormat(homework3.queries[j])
+                    self.assertEqual(output_line.strip('\n'), result)
+                    j += 1

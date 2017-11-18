@@ -10,7 +10,6 @@ def getInputs(queries_list, sentences_list, filename):
         queries_list.append(lines[query].strip('\n'))
     for sentence in range(no_of_queries + 2, no_of_queries + 2 + no_of_sentences):
         sentences_list.append(lines[sentence].strip('\n'))
-    pass
 
 def is_single_literal(sentence):
     if len(sentence.split('|')) == 1:
@@ -222,16 +221,16 @@ def resolveByOrElimination(query, sentence, sentence_set):
 
     applyTransitiveOperation(pre_unifier_list, unifier_list)
     pre_unifier_list.update(unifier_list)
+    pre_unifier_list = removeUnnecessaryVariables(pre_unifier_list, query)
     if not pre_unifier_list:
         return True
-    pre_unifier_list  = removeUnnecessaryVariables(pre_unifier_list, query)
     return pre_unifier_list
 
 def resultInCorrectOutputFormat(query):
     return "TRUE" if resolve(query, set()) else "FALSE"
 
 if __name__ == '__main__':
-    getInputs(queries, KB_sentences, 'test4.txt')
+    getInputs(queries, KB_sentences, 'input.txt')
     file = open('output.txt', 'w')
     for query in queries:
         result = resultInCorrectOutputFormat(query)
