@@ -49,7 +49,10 @@ class TestInference(TestCase):
     def test_4(self):
         homework3.queries, homework3.KB_sentences = [], []
         homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test4.txt')
-        self.assertEqual(False, homework3.resolve('Kills(Curiosity,Tuna)', set()));
+        a = homework3.resolve('Animal(Tuna)', set());
+        a = homework3.resolve('AnimalLover(Jack)', set());
+        a = homework3.resolve('~Kills(Jack,Tuna)', set());
+        self.assertNotEqual(False, homework3.resolve('Kills(Curiosity,Tuna)', set()));
 
     def test_5(self):
         homework3.queries, homework3.KB_sentences = [], []
@@ -57,6 +60,10 @@ class TestInference(TestCase):
         self.assertNotEqual(False, homework3.resolve('L(Tony,Snow)', set()));
 
     def test_dropbox(self):
-        homework3.queries, homework3.KB_sentences = [], []
-        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'input.txt')
-        self.assertNotEqual(False, homework3.resolve('B(John)', set()));
+        for i in range(1,11):
+            homework3.queries, homework3.KB_sentences = [], []
+            homework3.getInputs(homework3.queries, homework3.KB_sentences, 'tests/input' + i + '.txt')
+            with open('tests/output' + i + '.txt', 'r') as output_file:
+                lines = output_file.readlines()
+                for output_line in lines:
+                    self.assertEqual(output_line.strip(), homework3.resultInCorrectOutputFormat(homework3.queries[i], set()))

@@ -1,5 +1,5 @@
 1
-B(John)
+P(Joe, Mary)
 2
-A(x)
-~A(x) | B(John)
+P(x,y) | P(a,b) | ~A(x)
+A(y) | ~P(c,d)

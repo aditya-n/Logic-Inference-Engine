@@ -199,6 +199,14 @@ def getUnifierListForNegDisjunctList(unifier_list, neg_disjuncts, sentence_set):
     return unifier_list
 
 
+def removeUnnecessaryVariables(pre_unifier_list, query):
+    pre_unifier_list_copy = pre_unifier_list.copy()
+    query_params = getParameterFromTerm(query)
+    for key in pre_unifier_list:
+        if key not in query_params:
+            del pre_unifier_list_copy[key]
+    return pre_unifier_list_copy
+
 def resolveByOrElimination(query, sentence, sentence_set):
     neg_disjuncts, corresponding_disjunct = findDNFInWhichQueryExists(query, sentence)
     if not neg_disjuncts: # there is no sentence with multiple disjuncts
@@ -214,13 +222,19 @@ def resolveByOrElimination(query, sentence, sentence_set):
 
     applyTransitiveOperation(pre_unifier_list, unifier_list)
     pre_unifier_list.update(unifier_list)
+    if not pre_unifier_list:
+        return True
+    pre_unifier_list  = removeUnnecessaryVariables(pre_unifier_list, query)
     return pre_unifier_list
 
+def resultInCorrectOutputFormat(query):
+    return "TRUE" if resolve(query, set()) else "FALSE"
+
 if __name__ == '__main__':
-    getInputs(queries, KB_sentences, 'input.txt')
+    getInputs(queries, KB_sentences, 'test4.txt')
     file = open('output.txt', 'w')
     for query in queries:
-        result = "TRUE" if resolve(query, set()) else "FALSE"
+        result = resultInCorrectOutputFormat(query)
         print(result)
         file.write(result)
     file.close()
