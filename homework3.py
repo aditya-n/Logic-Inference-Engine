@@ -34,17 +34,28 @@ def reverseMapping(map):
     return reverse_map
 
 
+def updateDict(unifier_list, new_unifiers):
+    for key in new_unifiers:
+        if key in unifier_list:
+            unifier_list[key] = unifier_list[key] + '&' + new_unifiers[key]
+        else:
+            unifier_list[key] = new_unifiers[key]
+
 def resolveIfLiteralPresent(query):
     predicate = query.split('(')[0]
     parameters_in_query = getParameterFromTerm(query) # get parameter in ()
+    unifier_list = {}
     for sentence in KB_sentences:
         if is_single_literal(sentence) and predicate in sentence: # Get single literal sentences
             parameters_in_sentence = getParameterFromTerm(sentence) #get parameter within ()
             if isVariable(parameters_in_sentence) or parameters_in_query == parameters_in_sentence:
                 return True
             if isVariable(parameters_in_query) and not isVariable(parameters_in_sentence): # UNIFY here and return the var-const matching
-                return getUnifierDict(query, sentence)
-    return False
+                updateDict(unifier_list, getUnifierDict(query, sentence))
+    if unifier_list:
+        return unifier_list
+    else:
+        return False
 
 def resolve(query, sentence_set): #TODO add DP
     new_sentence_set = sentence_set.copy()
@@ -131,6 +142,34 @@ def removeConstantAsKeyItems(unifier_list):
         if not isVariable(key):
             del unifier_list_clone[key]
     return unifier_list_clone
+
+
+def getMultiValuedKeyIfPresentInDict(unifier_list_for_this_disjunct):
+    for key in unifier_list_for_this_disjunct:
+        if '&' in unifier_list_for_this_disjunct[key]: #TODO what if multiple keys have multiple values
+            return key
+    return False
+
+def getUpdatedUnifierList(unifier_list, neg_disjuncts, index, sentence_set):
+    new_unifier_list = unifier_list.copy()
+    if index == len(neg_disjuncts):
+        return unifier_list
+
+    unifier_list_for_this_disjunct = resolve(neg_disjuncts[index], sentence_set)
+    multi_valued_key = getMultiValuedKeyIfPresentInDict(unifier_list_for_this_disjunct)
+    if multi_valued_key:
+        branch_values = unifier_list_for_this_disjunct[multi_valued_key].split('&')
+        del unifier_list_for_this_disjunct[multi_valued_key]
+        for value in branch_values:
+            unifier_list_for_this_disjunct.update({multi_valued_key : value})
+            result = getUpdatedUnifierList(unifier_list, neg_disjuncts, index + 1, sentence_set)
+            if result is not False:
+                return result
+            return False
+    else:
+        new_unifier_list.update(unifier_list_for_this_disjunct)
+        return getUpdatedUnifierList(unifier_list, neg_disjuncts, index + 1, sentence_set)
+
 
 
 def getUnifierListForNegDisjunctList(unifier_list, neg_disjuncts, sentence_set):

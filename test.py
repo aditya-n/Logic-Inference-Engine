@@ -29,9 +29,11 @@ class TestInference(TestCase):
     def test_1(self):
         homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test1.txt')
 
+        a = homework3.resolveIfLiteralPresent('B(John,y)');
         self.assertEqual(False, homework3.resolve('F(Joe)', set()));
         a = homework3.resolve('B(John,x)', set());
         a = homework3.resolve('A(John)', set());
+
         self.assertNotEqual(False, homework3.resolve('H(John)', set()));
         self.assertNotEqual(False, homework3.resolve('~H(Alice)', set()));
         self.assertEqual(False, homework3.resolve('~H(John)', set()));
