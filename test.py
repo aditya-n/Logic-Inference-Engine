@@ -15,13 +15,13 @@ class TestInference(TestCase):
 
     def test_3(self):
         homework3.queries, homework3.KB_sentences = [], []
-        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test3.txt')
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'tests/input3.txt')
         self.assertNotEqual(False, homework3.resolve('Criminal(West)', set()));
         pass
 
     def test_2(self):
         homework3.queries, homework3.KB_sentences = [], []
-        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test2.txt')
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'tests/input2.txt')
         a = homework3.apply_unifiers('Ancestor(x,z)', {'x': 'Liz', 'z': 'Joe'})
 
         self.assertNotEqual(False, homework3.resolve('Ancestor(Liz,Billy)', set()));
@@ -29,7 +29,7 @@ class TestInference(TestCase):
 
     def test_1(self):
         homework3.queries, homework3.KB_sentences = [], []
-        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test1.txt')
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'tests/input1.txt')
 
         a = homework3.resolveIfLiteralPresent('B(John,y)');
         a = homework3.resolveIfLiteralPresent('D(Joe,y)');
@@ -48,7 +48,7 @@ class TestInference(TestCase):
 
     def test_4(self):
         homework3.queries, homework3.KB_sentences = [], []
-        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test4.txt')
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'tests/input12.txt')
         a = homework3.resolve('Animal(Tuna)', set());
         a = homework3.resolve('AnimalLover(Jack)', set());
         a = homework3.resolve('~Kills(Jack,Tuna)', set());
@@ -56,7 +56,7 @@ class TestInference(TestCase):
 
     def test_5(self):
         homework3.queries, homework3.KB_sentences = [], []
-        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'test5.txt')
+        homework3.getInputs(homework3.queries, homework3.KB_sentences, 'tests/input13.txt')
         self.assertNotEqual(False, homework3.resolve('L(Tony,Snow)', set()));
 
     def test_input(self):
@@ -66,7 +66,7 @@ class TestInference(TestCase):
         pass
 
     def test_dropbox(self):
-        for i in range(1,14):
+        for i in range(1,15):
             homework3.queries, homework3.KB_sentences = [], []
             homework3.getInputs(homework3.queries, homework3.KB_sentences, os.path.join('tests', 'input' + str(i) + '.txt'))
             with open(os.path.join('tests', 'output' + str(i) + '.txt'), 'r') as output_file:
