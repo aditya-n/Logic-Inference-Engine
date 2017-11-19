@@ -62,8 +62,14 @@ class TestInference(TestCase):
     def test_input(self):
         homework3.queries, homework3.KB_sentences = [], []
         homework3.getInputs(homework3.queries, homework3.KB_sentences, 'input.txt')
-        a = homework3.resolve('B(Ada)', set());
-        pass
+
+        a = homework3.getUnifierDict('Test(x,x)','Test(B,BB)')
+        a = homework3.resolve('Test(x,x)', set());
+        a = homework3.resolve('TS(A)', set());
+        a = homework3.getUnifierDict('FA(x,x,y)', 'FA(y,y,x)')
+        a = homework3.resolve('FA(y,y,x)', set());
+        a = homework3.resolve('GA(Add)', set());
+        a = homework3.getUnifierDict()
 
     def test_dropbox(self):
         for i in range(1,15):

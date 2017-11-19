@@ -50,7 +50,10 @@ def resolveIfLiteralPresent(query):
             if isVariable(parameters_in_sentence) or parameters_in_query == parameters_in_sentence:
                 return True
             if isVariable(parameters_in_query) and not isVariable(parameters_in_sentence): # UNIFY here and return the var-const matching
-                updateDict(unifier_list, getUnifierDict(query, sentence))
+                temp_unifier_list = getUnifierDict(query, sentence) #Hack for preventing one var mapping to multiple constants
+                if temp_unifier_list is None:                       #
+                    return False                                    #
+                updateDict(unifier_list, temp_unifier_list)
     if unifier_list:
         return unifier_list
     else:
@@ -78,8 +81,10 @@ def getUnifierDict(query, term):
     for i in range(0, no_of_params):
         if not(term_params[i] == query_params[i]):
             if not isVariable(term_params[i]) and not isVariable(query_params[i]): # when match is between 2 unequal constants
-                return {}                                                             # There is no unification for the whole query and term
+                return None                                                            # There is no unification for the whole query and term
             else:
+                if query_params[i] in unifiers and unifiers[query_params[i]] != term_params[i]: # if single var maps to multiple constants . Do(x,x) , Do(Jaga,Laya)
+                    return None
                 unifiers[query_params[i]] = term_params[i]   # param order matters here for getVarConstPair()
     return unifiers
 
@@ -112,7 +117,7 @@ def findDNFInWhichQueryExists(query, sentence):
     disjunct_list = list(map(str.strip, disjunct_list))
     corresponding_disjunct = None
     for disjunct in disjunct_list:
-        if getPredicate(query) == getPredicate(disjunct): #TODO Should solve even if just neg(query) present?
+        if getPredicate(query) == getPredicate(disjunct) and getUnifierDict(query, disjunct) is not None:  #TODO Should solve even if just neg(query) present?
             corresponding_disjunct = disjunct #getMatchingTerm(query, disjunct_list)
     if corresponding_disjunct:
         disjunct_list.remove(corresponding_disjunct)
