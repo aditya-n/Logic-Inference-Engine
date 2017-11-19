@@ -37,6 +37,8 @@ class TestInference(TestCase):
         a = homework3.resolve('B(John,x)', set());
         a = homework3.resolve('C(John,Joe)', set());
         a = homework3.resolve('A(John)', set());
+        a = homework3.resolve('D(x,Alice)', set())
+        a = homework3.resolve('~H(Alice)', set())
 
         self.assertEqual(False, homework3.resolve('F(Joe)', set()));
         self.assertNotEqual(False, homework3.resolve('H(John)', set()));

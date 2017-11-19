@@ -41,18 +41,17 @@ def updateDict(unifier_list, new_unifiers):
             unifier_list[key] = new_unifiers[key]
 
 def resolveIfLiteralPresent(query):
-    predicate = getPredicate(query)
     parameters_in_query = getParameterFromTerm(query) # get parameter in ()
     unifier_list = {}
     for sentence in KB_sentences:
-        if is_single_literal(sentence) and predicate == getPredicate(sentence): # Get single literal sentences
+        if is_single_literal(sentence) and getPredicate(query) == getPredicate(sentence): # Get single literal sentences
             parameters_in_sentence = getParameterFromTerm(sentence) #get parameter within ()
             if isVariable(parameters_in_sentence) or parameters_in_query == parameters_in_sentence:
                 return True
             if isVariable(parameters_in_query) and not isVariable(parameters_in_sentence): # UNIFY here and return the var-const matching
                 temp_unifier_list = getUnifierDict(query, sentence) #Hack for preventing one var mapping to multiple constants
                 if temp_unifier_list is None:                       #
-                    return False                                    #
+                    continue                                        #
                 updateDict(unifier_list, temp_unifier_list)
     if unifier_list:
         return unifier_list
@@ -137,7 +136,7 @@ def removeVariableMappingsInUnifierList(pre_unifier_list):
     return {key: value for key, value in pre_unifier_list.items() if not (isVariable(key) and isVariable(value))}
 
 def resolveByOrEliminationForKB(query, sentence_set):
-    for sentence in KB_sentences: #TODO instead of looping all sentences, fetch from pre-indexed list where query is present
+    for sentence in KB_sentences:
         resolve_result = resolveByOrElimination(query, sentence, sentence_set)
         if resolve_result:
             return resolve_result
