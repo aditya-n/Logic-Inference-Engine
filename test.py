@@ -65,16 +65,14 @@ class TestInference(TestCase):
         homework3.queries, homework3.KB_sentences = [], []
         homework3.getInputs(homework3.queries, homework3.KB_sentences, 'input.txt')
 
-        a = homework3.getUnifierDict('Test(x,x)','Test(B,BB)')
-        a = homework3.resolve('Test(x,x)', set());
-        a = homework3.resolve('TS(A)', set());
-        a = homework3.getUnifierDict('FA(x,x,y)', 'FA(y,x,x)')
-        a = homework3.resolve('FA(y,y,x)', set());
-        a = homework3.resolve('GA(Add)', set());
-        a = homework3.getUnifierDict()
+        #a = homework3.findDNFInWhichQueryExists('C(PHD,PHD)', ~A(x,y) | ~B(z,w) | C(x,w))
+        a = homework3.resolve('A(PHD,x)', set());
+        a = homework3.resolve('B(x,PHD)', set());
+        a = homework3.resolve('C(PHD,PHD)', set());
+        pass
 
     def test_dropbox(self):
-        for i in range(1,22):
+        for i in range(1,23):
             homework3.queries, homework3.KB_sentences = [], []
             homework3.getInputs(homework3.queries, homework3.KB_sentences, os.path.join('tests', 'input' + str(i) + '.txt'))
             with open(os.path.join('tests', 'output' + str(i) + '.txt'), 'r') as output_file:
