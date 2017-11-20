@@ -68,13 +68,13 @@ class TestInference(TestCase):
         a = homework3.getUnifierDict('Test(x,x)','Test(B,BB)')
         a = homework3.resolve('Test(x,x)', set());
         a = homework3.resolve('TS(A)', set());
-        a = homework3.getUnifierDict('FA(x,x,y)', 'FA(y,y,x)')
+        a = homework3.getUnifierDict('FA(x,x,y)', 'FA(y,x,x)')
         a = homework3.resolve('FA(y,y,x)', set());
         a = homework3.resolve('GA(Add)', set());
         a = homework3.getUnifierDict()
 
     def test_dropbox(self):
-        for i in range(1,15):
+        for i in range(1,21):
             homework3.queries, homework3.KB_sentences = [], []
             homework3.getInputs(homework3.queries, homework3.KB_sentences, os.path.join('tests', 'input' + str(i) + '.txt'))
             with open(os.path.join('tests', 'output' + str(i) + '.txt'), 'r') as output_file:
@@ -82,5 +82,7 @@ class TestInference(TestCase):
                 j = 0
                 for output_line in lines:
                     result = homework3.resultInCorrectOutputFormat(homework3.queries[j])
-                    self.assertEqual(output_line.strip('\n'), result)
+                    if output_line.strip('\n') != result:
+                        print("\n Failed TestCase " + str(i) + "Query " + str(j+1))
+                        self.assertEqual(output_line.strip('\n'), result)
                     j += 1

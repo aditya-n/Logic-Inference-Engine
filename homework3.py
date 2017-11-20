@@ -78,12 +78,12 @@ def getUnifierDict(query, term):
         return {}
     no_of_params = len(query_params)
     for i in range(0, no_of_params):
+        if query_params[i] in unifiers and unifiers[query_params[i]] != term_params[i]:  # if single var maps to multiple vars or constants. Do(x,x) , Do(x,y)
+            return None
         if not(term_params[i] == query_params[i]):
             if not isVariable(term_params[i]) and not isVariable(query_params[i]): # when match is between 2 unequal constants
                 return None                                                            # There is no unification for the whole query and term
             else:
-                if query_params[i] in unifiers and unifiers[query_params[i]] != term_params[i]: # if single var maps to multiple constants . Do(x,x) , Do(Jaga,Laya)
-                    return None
                 unifiers[query_params[i]] = term_params[i]   # param order matters here for getVarConstPair()
     return unifiers
 
