@@ -1,0 +1,6 @@
+1
+GA(Add)
+3
+~FA(y,y,x) |GA(z)
+~AB(x,y,z) | FA(x,y,y)
+AB(Random,Sub,Randomm)
